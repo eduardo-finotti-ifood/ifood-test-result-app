@@ -1,24 +1,23 @@
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, Dimensions, Image, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, FlatList, StatusBar } from 'react-native';
 import { Header, Left, Right, Icon, Body, Title } from 'native-base'
-
+import axios from 'axios';
+import { SafeAreaView } from 'react-navigation';
 
 export default class AndroidDailyScreen extends Component {
 
+  componentDidMount() {
+    axios.get('http://192.168.169.105:8000/api/results?run=daily&platform=android&quantity=10')
+    .then(response => {
+      this.setState({ runs: response.data.f })
+    })
+    .catch(error => {
+      console.log(error);
+    });
+  }
+
   state = {
-    runs:[
-      {build: '#123',
-      result: 'success',
-      date: '01/01/2020'},
-      
-      {build: '#344',
-      result: 'success',
-      date: '02/01/2020'},
-      
-      {build: '#555',
-      result: 'error',
-      date: '03/01/2020'},
-    ]
+    runs:[]
   }
 
   static navigationOptions = {
@@ -28,34 +27,54 @@ export default class AndroidDailyScreen extends Component {
   }
 
   render() {
-    
+
     return (
       <View style={styles.container}>
-        <Header>
-          <Left>
-            <Icon name='menu' onPress={() => this.props.navigation.openDrawer()} />
-          </Left>
-          <Body>
-            <Title>Daily Android</Title>
-          </Body>
-          <Right/>
-        </Header>
-        <View style={{ alignItems: 'center', justifyContent: 'center'}}>
+        <StatusBar barStyle="light-content" />
+
+        <SafeAreaView  style={{backgroundColor: '#1f1f1f', height: 75}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', paddingTop: 35}}>
+            <Icon style={{color: 'white', paddingLeft: 20}} name='menu' onPress={() => this.props.navigation.openDrawer()} />
+            <Text style={{color: 'white', fontSize: 20, paddingLeft: '8%'}}>Daily Android</Text>
+          </View>
+        </SafeAreaView>
+
+        <View style={{ alignItems: 'flex-start', justifyContent: 'center', marginTop: 30}}>
+        
+          {/* <View style={{ padding: 10}}>
+            <Text style={{color: 'white', fontSize: 25, padding:10}}>Daily Run for Android</Text>
+          </View> */}
           
-        {this.state.runs.map((run, index) => (
-            <View style={{paddingTop: 20}}>
-              <ImageBackground  
-                                
-                                style={{width: 350, shadowColor: 'black',
-                                shadowOffset: { width: 1, height: 2 },
-                                shadowOpacity: 0.8, shadowRadius: 5,    
-                                height: 100, alignContent: 'center', justifyContent: 'center', 
-                                alignItems: 'left', paddingLeft: 75}}> 
-                <Text>Build: {run.build}  Result: {run.result}</Text>  
-                <Text>Hour: {run.date}</Text>
-              </ImageBackground>
-            </View>
-        ))}        
+          <FlatList style={{ width: '97%', height: '75%', paddingLeft: '5%',}}
+                      data={this.state.runs}
+                      keyExtractor={item => item.build_number.toString()}
+                      renderItem={({ item }) => 
+        
+            <View style={{ width: '92%', height: 80, margin: 10,
+                      backgroundColor: '#474747', flexDirection: 'row',
+                      shadowColor: 'black',shadowOffset: { width: 1, height: 1 },
+                      shadowOpacity: 0.5, shadowRadius: 4,}}> 
+
+              <View style={{ backgroundColor: item.result == 'success'? 'green': 'red', width: 15,}}></View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center'}}>
+                <Text style={{color: 'white', padding: 20, fontSize: 35}}>#{item.build_number}</Text>  
+              </View>
+
+              <View style={{ flexDirection: 'column', alignItems: 'flex-start', 
+                          justifyContent: 'flex-start', padding: 20}}>
+
+                <View style={{  flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+                  <Text style={{color: 'white', fontSize: 20, fontWeight: 'bold',}}>{item.result}</Text> 
+                </View>   
+
+                <View style={{  flexDirection: 'row', alignItems: 'flex-start', paddingTop: 10}}>
+                  <Text style={{color: 'white', fontSize: 15}}>{item.date}</Text>  
+                </View>
+
+              </View>
+
+          </View> }/>  
         </View>
       </View>
     );
@@ -65,8 +84,7 @@ export default class AndroidDailyScreen extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
-    // alignItems: 'center',
-    // justifyContent: 'center',
+    backgroundColor: '#2D2D2D',
   },
 });
+

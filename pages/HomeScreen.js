@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity} from 'react-native';
+import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity } from 'react-native';
 import { Icon } from 'native-base'
 import { FlatGrid } from 'react-native-super-grid';
 import { SafeAreaView } from 'react-navigation';
@@ -13,10 +13,14 @@ import { showMessage, hideMessage } from "react-native-flash-message";
 
 export default class HomeScreen extends Component {
 
-  state = {
+  state={
     runs:[],
     health: null,
-    showAlert: false
+    failure: null,
+    step: null,
+    qtd: null,
+    showAlert: false,
+    data : [ 50, 10, 40, 95, -24, 85]
   }
 
   showAlert = () => {
@@ -32,25 +36,27 @@ export default class HomeScreen extends Component {
     });
   };
 
-  async componentDidMount() {
-
+  componentDidMount = () =>  {    
     var run = []
     this.setState({ runs: run })
     // health ios/android
-    axios.get('http://192.168.169.105:8000/api/results?run=health&platform=ios&quantity=1')
-    .then(response => {
-      this.setState({ health: response.data.f[0].result })
-
-      axios.get('http://192.168.169.105:8000/api/results?run=health&platform=android&quantity=1')
-      .then(response => {
+    axios.get('http://192.168.169.104:8000/api/results?run=health&platform=ios&quantity=1')
+    .then(response => {   
+    
+    
+      if(response.data.f[0].result != 'fail'){
+        axios.get('http://192.168.169.104:8000/api/results?run=health&platform=android&quantity=1')
+        .then(response => {
+          this.setState({ health: response.data.f[0].result })
+        })
+      } else {
         this.setState({ health: response.data.f[0].result })
-      })
-      .catch(error => {
-        console.log(error);
-      });
+      }
 
+      
+       
         //daily ios
-        axios.get('http://192.168.169.105:8000/api/results?run=daily&platform=ios&quantity=1')
+        axios.get('http://192.168.169.104:8000/api/results?run=daily&platform=ios&quantity=1')
         .then(response => {
           var run = [...this.state.runs]
           run.push({
@@ -59,60 +65,47 @@ export default class HomeScreen extends Component {
           this.setState({ runs: run })
 
           // daily android
-          axios.get('http://192.168.169.105:8000/api/results?run=daily&platform=android&quantity=1')
+          axios.get('http://192.168.169.104:8000/api/results?run=daily&platform=android&quantity=1')
           .then(response => {
             var run = [...this.state.runs]
             run.push({
               id:2, name: 'Daily Android', page: 'AndroidDaily', platform: 'android', result: response.data.f[0].result
             })
             this.setState({ runs: run })
-
-            // hourly ios
-            axios.get('http://192.168.169.105:8000/api/results?run=hourly&platform=ios&quantity=1')
-            .then(response => {
-              var run = [...this.state.runs]
-              run.push({
-                id:3, name: 'Hourly iOS', page: 'IOSHourly', platform: 'ios', result: response.data.f[0].result
-              })
-              this.setState({ runs: run })
-
-                // hourly android
-                axios.get('http://192.168.169.105:8000/api/results?run=hourly&platform=android&quantity=1')
-                .then(response => {
-                  var run = [...this.state.runs]
-                  run.push({
-                    id:4, name: 'Hourly Android', page: 'AndroidHourly', platform: 'android', result: response.data.f[0].result
-                  })
-                  this.setState({ runs: run })
-                })
-                .catch(error => {
-                  console.log(error);
-                });
-            })
-            .catch(error => {
-              console.log(error);
-            });
         })
-        .catch(error => {
-          console.log(error);
-        });
       })
-      .catch(error => {
-        console.log(error);
-      });
-      showMessage({
-        message: "Atualizado",
-        description: "Dados atualizados! :)",
-        type: "success",
-        floating: true,
-        position: "bottom",
-        animationDuration: "400",
-        duration: 2000
-      });
-    })
+
+      // hourly ios
+      axios.get('http://192.168.169.104:8000/api/results?run=hourly&platform=ios&quantity=1')
+      .then(response => {
+        var run = [...this.state.runs]
+        run.push({
+          id:3, name: 'Hourly iOS', page: 'IOSHourly', platform: 'ios'
+        })
+        this.setState({ runs: run })
+
+        // hourly android
+        axios.get('http://192.168.169.104:8000/api/results?run=hourly&platform=android&quantity=1')
+        // axios.get('http://192.168.169.104:8000/api/results?run=hourly&platform=android&quantity=1')
+        .then(response => {
+          var run = [...this.state.runs]
+          run.push({
+            id:4, name: 'Hourly Android', page: 'AndroidHourly', platform: 'android'
+          })
+          this.setState({ runs: run })
+        })
+      })
     
-    .catch(error => {
-      console.log(error);
+    })
+
+    showMessage({
+      message: "Atualizado",
+      description: "Dados atualizados! :)",
+      type: "success",
+      floating: true,
+      position: "bottom",
+      animationDuration: "400",
+      duration: 2000
     });
   }
 
@@ -123,6 +116,21 @@ export default class HomeScreen extends Component {
   }
 
   render() {
+
+    // const data = [ 50, 10, 40, 95, -24, 85]
+
+    const randomColor = () => ('#' + (Math.random() * 0xFFFFFF << 0).toString(16) + '000000').slice(0, 7)
+
+    const pieData = this.state.data
+        .filter(value => value > 0)
+        .map((value, index) => ({
+            value,
+            svg: {
+                fill: randomColor(),
+                onPress: () => console.log('press', index),
+            },
+            key: `pie-${index}`,
+        }))
 
     return (
       <View style={styles.container}>
@@ -139,8 +147,7 @@ export default class HomeScreen extends Component {
       
       <View >
         {/* HEALTH TEST */}
-        <Text style={{color: 'white', fontSize: 25, paddingLeft: 20, 
-                        paddingTop: 10, paddingBottom: 10}}>Health</Text>
+        <Text style={{color: 'white', fontSize: 25, paddingLeft: 20, paddingTop: 10, paddingBottom: 10}}>Health</Text>
 
         <View style={[styles.itemHealth, {backgroundColor: this.state.health=='success'?'#2EAB3D':'#E74949'}]}> 
           <View style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-start', padding: 10}}>
@@ -160,8 +167,8 @@ export default class HomeScreen extends Component {
         {/* DAILY AND HOURLY */}
         <Text style={{color: 'white', fontSize: 25,  paddingLeft: 20, paddingTop: 10}}>Runs</Text>
 
-        <View style={{height: '80%'}}>
-          <FlatGrid itemDimension={130} items={this.state.runs} style={styles.gridView}
+        <View >
+          <FlatGrid itemDimension={80} items={this.state.runs}
             renderItem={({ item, index }) => (            
               <TouchableOpacity key={index} onPress={() => this.props.navigation.navigate(item.page)}>
                 <View style={[styles.itemContainer, { backgroundColor: item.result=='success'?'#2EAB3D':'#E74949' }]}>
@@ -170,9 +177,12 @@ export default class HomeScreen extends Component {
                   <Text style={styles.itemCode}>{item.result}</Text>
                 </View>
               </TouchableOpacity>
+    
           )}/>
+
         </View>
       </View>
+
       <FlashMessage position="top" />
       
     </View>
@@ -184,13 +194,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#2D2D2D',
-    // alignItems: 'center',
-    // justifyContent: 'center',
   },
-  gridView: {
-    
-  },
-
   itemHealth: {
     justifyContent: 'flex-end',
     borderRadius: 5,
